@@ -1,0 +1,16 @@
+{
+  "name": "3d",
+  "version": "1.0.0",
+  "description": "3d",
+  "main": "src/particle-wave.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "particle",
+    "three.js",
+    "stats"
+  ],
+  "author": "Cecil",
+  "license": "MIT"
+}

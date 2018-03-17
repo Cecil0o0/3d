@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    html {
+      font-family: Monospace;
+    }
+
+    body {
+      padding: 0;
+      margin: 0;
+      overflow: auto;
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="../lib/three-91.min.js"></script>
+
+  <script src="../lib/plugins/Projector.min.js"></script>
+  <script src="../lib/plugins/CanvasRenderer.min.js"></script>
+
+  <script src="../lib/plugins/Stats.min.js"></script>
+  <script>
+    var xSum = 50,
+        zSum = 50,
+        gutter = 100,
+        metrix = [],
+        container = document.body,
+        stats = null,
+        particle = null,
+        // y轴运动系数
+        count = 0
+
+    var programStroke = function (context) {
+      context.lineWidth = 0.025;
+      context.beginPath();
+      context.arc(0, 0, 0.5, 0, Math.PI * 2, true);
+      context.stroke();
+    };
+
+    // 初始化renderer
+    var renderer = new THREE.CanvasRenderer()
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setSize(window.innerWidth, window.innerHeight)
+    renderer.setClearColor(0x333333)
+    container.appendChild(renderer.domElement)
+    // 初始化相机
+    var camera = new THREE.PerspectiveCamera(100, container.clientWidth / container.clientHeight, 1, 5000);
+    camera.position.set(5, 1, 500)
+    // 初始化场景
+    var scene = new THREE.Scene()
+    scene.add(camera)
+
+    // 初始化原点
+    var circleMaterial = new THREE.SpriteCanvasMaterial({
+      color: 0xffffff,
+      program: function (context) {
+        context.beginPath();
+        context.arc(0, 0, .1, 0, Math.PI * 2, true);
+        context.fill();
+      }
+    })
+    var circle = new THREE.Sprite(circleMaterial)
+    scene.add(circle)
+
+    // 初始化坐标系
+    var red = new THREE.LineBasicMaterial({
+      color: 0xff0000,
+    })
+    var green = new THREE.LineBasicMaterial({
+      color: 0x00ff00,
+    })
+    var blue = new THREE.LineBasicMaterial({
+      color: 0x0000ff,
+    })
+    var lineGeometryX = new THREE.Geometry()
+    lineGeometryX.vertices.push(
+      new THREE.Vector3( 0, 0, 0),
+      new THREE.Vector3( 200, 0, 0 )
+    )
+    var lineGeometryY = new THREE.Geometry()
+    lineGeometryY.vertices.push(
+      new THREE.Vector3( 0, 0, 0),
+      new THREE.Vector3( 0, 200, 0)
+    )
+    var lineGeometryZ = new THREE.Geometry()
+    lineGeometryZ.vertices.push(
+      new THREE.Vector3( 0, 0, 0),
+      new THREE.Vector3( 0, 0, 200)
+    )
+    var line1 = new THREE.Line(lineGeometryX, red)
+    var line2 = new THREE.Line(lineGeometryY, green)
+    var line3 = new THREE.Line(lineGeometryZ, blue)
+    scene.add(line1)
+    scene.add(line2)
+    scene.add(line3)
+
+    // 渲染原点和坐标系
+    camera.lookAt(scene.position)
+    renderer.render(scene, camera)
+
+    // 初始化镜头跟随
+    let mouseX = 0
+    let mouseY = 0
+    function onDocumentMouseMove (e) {
+      mouseX = e.clientX - window.innerWidth / 2
+      mouseY = window.innerHeight / 2 - e.clientY
+    }
+
+    document.addEventListener('mousemove', onDocumentMouseMove, false)
+
+    // canvas自定义原形材质
+    var material = new THREE.SpriteCanvasMaterial({
+      color: 0xffffff,
+      program: function (context) {
+        context.beginPath();
+        context.arc(0, 0, 1, 0, Math.PI * 2, true);
+        context.fill();
+      }
+    })
+    // 以场景原点为中心描绘粒子波浪初始帧
+    var particles = []
+    var sum = 0
+    for(let i = 0 ; i < xSum ; i++) {
+      for(let j = 0; j < zSum; j ++) {
+        var particle = particles[ sum++ ] = new THREE.Sprite(material)
+        particle.position.x = i * gutter - ((xSum * gutter) / 2)
+        particle.position.z = j * gutter - ((zSum * gutter) / 2)
+        scene.add(particle)
+      }
+    }
+
+    // 每一帧渲染规则
+    function animate () {
+      requestAnimationFrame(animate)
+      render()
+      stats.update()
+    }
+
+    function render () {
+      // 镜头跟随交互
+      camera.position.x += ((mouseX - camera.position.x) * .02) * 2
+      camera.position.y += ((mouseY - camera.position.y) * .02) * 2
+      camera.lookAt(scene.position)
+
+      // 每帧渲染规则
+      var sum = 0
+      for (let ix = 0; ix < xSum; ix ++) {
+        for (let iy = 0; iy < zSum; iy ++) {
+          particle = particles[sum ++]
+          particle.position.y = Math.cos((ix + count) * 0.3) * 60 + Math.cos((iy + count) * 0.1) * 60
+          particle.scale.x = particle.scale.y = Math.cos((ix + count) * 0.1) * 10 + Math.cos((ix + count) * 0.3) * 8
+        }
+      }
+
+      renderer.render(scene, camera)
+
+      count += 0.12
+    }
+
+    // 开始计算帧率
+
+    stats = new Stats()
+    container.appendChild(stats.domElement)
+
+    // 开始渲染
+    animate()
+
+  </script>
+</body>
+
+</html>
